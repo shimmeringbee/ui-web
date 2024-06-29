@@ -23,7 +23,6 @@ The Web UI is the single page application which is the default user interface fo
 
 ## Usage
 
-
 ## Maintainers
 
 [@pwood](https://github.com/pwood)
