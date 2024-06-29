@@ -1,4 +1,3 @@
-import './App.css';
 import { Controller } from './components/Controller';
 
 const App = () => {
