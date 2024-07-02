@@ -1,5 +1,6 @@
 import { useAppDispatch } from '../app/hooks';
-import { FC, useEffect, useRef } from 'react';
+import type { FC } from 'react';
+import { useEffect, useRef } from 'react';
 import {
     ConnectionState,
     removeDevice,
@@ -11,8 +12,7 @@ import {
     updateLastMessage,
     updateZone,
 } from '../features/controller/controller-slice';
-import { ControllerStatus } from './ControllerStatus';
-import {
+import type {
     DeviceRemoveMessage,
     DeviceUpdateCapabilityMessage,
     DeviceUpdateMessage,
@@ -41,63 +41,35 @@ export const Controller: FC<ControllerProps> = (props) => {
             dispatch(updateLastMessage());
         });
 
-        eventSource.current.addEventListener(
-            'ZoneUpdate',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(updateZone(JSON.parse(e.data) as ZoneUpdateMessage));
-            }
-        );
+        eventSource.current.addEventListener('ZoneUpdate', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(updateZone(JSON.parse(e.data) as ZoneUpdateMessage));
+        });
 
-        eventSource.current.addEventListener(
-            'ZoneRemove',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(removeZone(JSON.parse(e.data) as ZoneRemoveMessage));
-            }
-        );
+        eventSource.current.addEventListener('ZoneRemove', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(removeZone(JSON.parse(e.data) as ZoneRemoveMessage));
+        });
 
-        eventSource.current.addEventListener(
-            'GatewayUpdate',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(
-                    updateGateway(JSON.parse(e.data) as GatewayUpdateMessage)
-                );
-            }
-        );
+        eventSource.current.addEventListener('GatewayUpdate', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(updateGateway(JSON.parse(e.data) as GatewayUpdateMessage));
+        });
 
-        eventSource.current.addEventListener(
-            'DeviceUpdate',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(
-                    updateDevice(JSON.parse(e.data) as DeviceUpdateMessage)
-                );
-            }
-        );
+        eventSource.current.addEventListener('DeviceUpdate', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(updateDevice(JSON.parse(e.data) as DeviceUpdateMessage));
+        });
 
-        eventSource.current.addEventListener(
-            'DeviceUpdateCapability',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(
-                    updateDeviceCapability(
-                        JSON.parse(e.data) as DeviceUpdateCapabilityMessage
-                    )
-                );
-            }
-        );
+        eventSource.current.addEventListener('DeviceUpdateCapability', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(updateDeviceCapability(JSON.parse(e.data) as DeviceUpdateCapabilityMessage));
+        });
 
-        eventSource.current.addEventListener(
-            'DeviceRemove',
-            (e: MessageEvent<string>) => {
-                dispatch(updateLastMessage());
-                dispatch(
-                    removeDevice(JSON.parse(e.data) as DeviceRemoveMessage)
-                );
-            }
-        );
+        eventSource.current.addEventListener('DeviceRemove', (e: MessageEvent<string>) => {
+            dispatch(updateLastMessage());
+            dispatch(removeDevice(JSON.parse(e.data) as DeviceRemoveMessage));
+        });
 
         eventSource.current.addEventListener('open', () => {
             dispatch(updateConnectionState(ConnectionState.Connected));
@@ -120,5 +92,5 @@ export const Controller: FC<ControllerProps> = (props) => {
         };
     }, [props.url]);
 
-    return <ControllerStatus />;
+    return false;
 };

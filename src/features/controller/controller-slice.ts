@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import {
+import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
+import type {
     DeviceRemoveMessage,
     DeviceUpdateCapabilityMessage,
     DeviceUpdateMessage,
@@ -8,7 +9,7 @@ import {
     ZoneUpdateMessage,
 } from './messages';
 
-interface Device {
+export interface Device {
     identifier: string;
     name?: string;
     zones: number[];
@@ -16,7 +17,7 @@ interface Device {
     capabilities: { [name: string]: any };
 }
 
-interface Zone {
+export interface Zone {
     identifier: number;
     name?: string;
     parentZone: number;
@@ -24,7 +25,7 @@ interface Zone {
     devices: string[];
 }
 
-interface Gateway {
+export interface Gateway {
     identifier: string;
     capabilities: string[];
     selfDevice: string;
@@ -46,7 +47,7 @@ interface ControllerState {
     gateways: { [identifier: string]: Gateway };
 }
 
-const RootZone: number = 0;
+export const RootZone: number = 0;
 
 const initialState: ControllerState = {
     connectionState: ConnectionState.Idle,
@@ -94,17 +95,17 @@ const controllerSlice = createSlice({
             if (msg.Parent !== state.zones[zoneId].parentZone) {
                 let oldParent = state.zones[zoneId].parentZone;
 
-                state.zones[oldParent].subZones = state.zones[oldParent].subZones.filter((zone) => zone != zoneId);
+                state.zones[oldParent].subZones = state.zones[oldParent].subZones.filter((zone) => zone !== zoneId);
                 state.zones[newParent].subZones.push(zoneId);
                 state.zones[zoneId].parentZone = newParent;
             }
 
-            state.zones[newParent].subZones = state.zones[newParent].subZones.filter((zone) => zone != zoneId);
+            state.zones[newParent].subZones = state.zones[newParent].subZones.filter((zone) => zone !== zoneId);
 
             let afterIndex = 0;
 
             if (msg.After !== 0) {
-                let afterIndex = state.zones[newParent].subZones.indexOf(msg.After);
+                afterIndex = state.zones[newParent].subZones.indexOf(msg.After) + 1;
             }
 
             state.zones[newParent].subZones = state.zones[newParent].subZones.toSpliced(afterIndex, 0, zoneId);
@@ -119,11 +120,11 @@ const controllerSlice = createSlice({
             let zone = state.zones[removeId];
 
             zone.devices.forEach((deviceId) => {
-                state.devices[deviceId].zones = state.devices[deviceId].zones.filter((zone) => zone != removeId);
+                state.devices[deviceId].zones = state.devices[deviceId].zones.filter((zone) => zone !== removeId);
             });
 
             state.zones[zone.parentZone].subZones = state.zones[zone.parentZone].subZones.filter(
-                (subZone) => subZone != removeId
+                (subZone) => subZone !== removeId
             );
         },
         updateGateway(state, action: PayloadAction<GatewayUpdateMessage>) {
@@ -157,8 +158,12 @@ const controllerSlice = createSlice({
                 state.devices[deviceId].name = action.payload.Metadata.Name;
             }
 
-            let newZones = (action.payload.Metadata.Zones || []).filter((zone) => !state.devices[deviceId].zones.includes(zone));
-            let removeZones = state.devices[deviceId].zones.filter((zone) => !(action.payload.Metadata.Zones || []).includes(zone));
+            let newZones = (action.payload.Metadata.Zones || []).filter(
+                (zone) => !state.devices[deviceId].zones.includes(zone)
+            );
+            let removeZones = state.devices[deviceId].zones.filter(
+                (zone) => !(action.payload.Metadata.Zones || []).includes(zone)
+            );
 
             newZones.forEach((zone) => {
                 state.devices[deviceId].zones.push(zone);

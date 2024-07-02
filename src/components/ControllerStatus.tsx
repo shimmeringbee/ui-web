@@ -1,9 +1,7 @@
 import { useAppSelector } from '../app/hooks';
 
 export const ControllerStatus = () => {
-    const connectionState = useAppSelector(
-        (state) => state.controller.connectionState
-    );
+    const connectionState = useAppSelector((state) => state.controller.connectionState);
     const lastMessage = useAppSelector((state) => state.controller.lastMessage);
 
     return (
