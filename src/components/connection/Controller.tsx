@@ -1,17 +1,14 @@
-import { useAppDispatch } from '../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
 import {
-    ConnectionState,
     removeDevice,
     removeZone,
-    updateConnectionState,
     updateDevice,
     updateDeviceCapability,
     updateGateway,
-    updateLastMessage,
     updateZone,
-} from '../features/controller/controller-slice';
+} from '../../features/controller/controller-slice';
 import type {
     DeviceRemoveMessage,
     DeviceUpdateCapabilityMessage,
@@ -19,23 +16,28 @@ import type {
     GatewayUpdateMessage,
     ZoneRemoveMessage,
     ZoneUpdateMessage,
-} from '../features/controller/messages';
+} from '../../features/controller/messages';
+import {
+    ConnectionProgress,
+    updateConnectionState,
+    updateLastMessage,
+} from '../../features/controller/connection-slice';
 
-interface ControllerProps {
-    url: string;
-}
-
-export const Controller: FC<ControllerProps> = (props) => {
+export const Controller = () => {
     const dispatch = useAppDispatch();
     const eventSource = useRef<EventSource | null>(null);
+
+    const urlBase = useAppSelector((state) => state.connection.url);
 
     useEffect(() => {
         if (eventSource.current !== null) {
             return;
         }
 
-        eventSource.current = new EventSource(props.url);
-        dispatch(updateConnectionState(ConnectionState.Connecting));
+        let url = `${urlBase}/api/v1/events/sse`;
+
+        eventSource.current = new EventSource(url);
+        dispatch(updateConnectionState(ConnectionProgress.Connecting));
 
         eventSource.current.addEventListener('HeartBeat', () => {
             dispatch(updateLastMessage());
@@ -72,11 +74,13 @@ export const Controller: FC<ControllerProps> = (props) => {
         });
 
         eventSource.current.addEventListener('open', () => {
-            dispatch(updateConnectionState(ConnectionState.Connected));
+            dispatch(
+                updateConnectionState(ConnectionProgress.Connected)
+            );
         });
 
         eventSource.current.addEventListener('error', () => {
-            dispatch(updateConnectionState(ConnectionState.Closed));
+            dispatch(updateConnectionState(ConnectionProgress.Closed));
         });
 
         return () => {
@@ -88,9 +92,9 @@ export const Controller: FC<ControllerProps> = (props) => {
             eventSource.current.close();
             eventSource.current = null;
 
-            dispatch(updateConnectionState(ConnectionState.Closed));
+            dispatch(updateConnectionState(ConnectionProgress.Closed));
         };
-    }, [props.url]);
+    }, [urlBase]);
 
     return false;
 };

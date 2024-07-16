@@ -3,7 +3,7 @@ import React from 'react';
 import { useAppSelector } from '../../../app/hooks';
 import type { Identify } from '../../../features/controller/capabilities';
 import { IdentifyName } from '../../../features/controller/capabilities';
-import { IconExclamationCircle } from '@tabler/icons-react';
+import { IconIdBadge } from '@tabler/icons-react';
 
 interface IdentifyProps {
     identifier: string;
@@ -14,5 +14,5 @@ export const IdentifyMini: FC<IdentifyProps> = ({ identifier }) => {
         (state) => state.controller.devices[identifier].capabilities[IdentifyName]
     ) as Identify;
 
-    return <IconExclamationCircle />;
+    return <IconIdBadge />;
 };

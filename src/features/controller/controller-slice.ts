@@ -1,5 +1,4 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
-import { createSlice } from '@reduxjs/toolkit';
 import type {
     DeviceRemoveMessage,
     DeviceUpdateCapabilityMessage,
@@ -8,6 +7,26 @@ import type {
     ZoneRemoveMessage,
     ZoneUpdateMessage,
 } from './messages';
+import { createAppSlice } from '../../app/createAppSlice';
+import { MoveDeviceToZone, NameDevice } from './payloads';
+import { RootState } from '../../app/store';
+import axios, { AxiosResponse } from 'axios';
+
+export enum OperationState {
+    IDLE,
+    IN_PROGRESS,
+    COMPLETE,
+    FAILED,
+}
+
+export interface Operation {
+    inflight: number;
+    state: OperationState;
+}
+
+export interface UIState {
+    operations: { [operation: string]: Operation };
+}
 
 export interface Device {
     identifier: string;
@@ -32,16 +51,7 @@ export interface Gateway {
     devices: string[];
 }
 
-export enum ConnectionState {
-    Idle,
-    Connecting,
-    Connected,
-    Closed,
-}
-
 interface ControllerState {
-    connectionState: ConnectionState;
-    lastMessage: number;
     devices: { [identifier: string]: Device };
     zones: { [identifier: number]: Zone };
     gateways: { [identifier: string]: Gateway };
@@ -50,8 +60,6 @@ interface ControllerState {
 export const RootZone: number = 0;
 
 const initialState: ControllerState = {
-    connectionState: ConnectionState.Idle,
-    lastMessage: 0,
     devices: {},
     zones: {
         0: {
@@ -65,17 +73,11 @@ const initialState: ControllerState = {
     gateways: {},
 };
 
-const controllerSlice = createSlice({
+const controllerSlice = createAppSlice({
     name: 'controller',
     initialState,
-    reducers: {
-        updateConnectionState(state, action: PayloadAction<ConnectionState>) {
-            state.connectionState = action.payload;
-        },
-        updateLastMessage(state) {
-            state.lastMessage = Date.now();
-        },
-        updateZone(state, action: PayloadAction<ZoneUpdateMessage>) {
+    reducers: (create) => ({
+        updateZone: create.reducer((state, action: PayloadAction<ZoneUpdateMessage>) => {
             let msg = action.payload;
             let zoneId = msg.Identifier;
             let newParent = msg.Parent;
@@ -109,8 +111,8 @@ const controllerSlice = createSlice({
             }
 
             state.zones[newParent].subZones = state.zones[newParent].subZones.toSpliced(afterIndex, 0, zoneId);
-        },
-        removeZone(state, action: PayloadAction<ZoneRemoveMessage>) {
+        }),
+        removeZone: create.reducer((state, action: PayloadAction<ZoneRemoveMessage>) => {
             let removeId = action.payload.Identifier;
 
             if (!(removeId in state.gateways)) {
@@ -126,8 +128,8 @@ const controllerSlice = createSlice({
             state.zones[zone.parentZone].subZones = state.zones[zone.parentZone].subZones.filter(
                 (subZone) => subZone !== removeId
             );
-        },
-        updateGateway(state, action: PayloadAction<GatewayUpdateMessage>) {
+        }),
+        updateGateway: create.reducer((state, action: PayloadAction<GatewayUpdateMessage>) => {
             let msg = action.payload;
 
             if (msg.Identifier! in state.gateways) {
@@ -141,8 +143,8 @@ const controllerSlice = createSlice({
                     devices: [],
                 };
             }
-        },
-        updateDevice(state, action: PayloadAction<DeviceUpdateMessage>) {
+        }),
+        updateDevice: create.reducer((state, action: PayloadAction<DeviceUpdateMessage>) => {
             let deviceId = action.payload.Identifier;
 
             if (!(deviceId in state.devices)) {
@@ -154,9 +156,7 @@ const controllerSlice = createSlice({
                 };
             }
 
-            if (action.payload.Metadata.Name) {
-                state.devices[deviceId].name = action.payload.Metadata.Name;
-            }
+            state.devices[deviceId].name = action.payload.Metadata.Name;
 
             let newZones = (action.payload.Metadata.Zones || []).filter(
                 (zone) => !state.devices[deviceId].zones.includes(zone)
@@ -174,8 +174,8 @@ const controllerSlice = createSlice({
                 state.devices[deviceId].zones = state.devices[deviceId].zones.filter((czone) => zone !== czone);
                 state.zones[zone].devices = state.zones[zone].devices.filter((id) => id !== deviceId);
             });
-        },
-        updateDeviceCapability(state, action: PayloadAction<DeviceUpdateCapabilityMessage>) {
+        }),
+        updateDeviceCapability: create.reducer((state, action: PayloadAction<DeviceUpdateCapabilityMessage>) => {
             let deviceId = action.payload.Identifier;
 
             if (!(deviceId in state.devices)) {
@@ -183,8 +183,8 @@ const controllerSlice = createSlice({
             }
 
             state.devices[deviceId].capabilities[action.payload.Capability] = action.payload.Payload;
-        },
-        removeDevice(state, action: PayloadAction<DeviceRemoveMessage>) {
+        }),
+        removeDevice: create.reducer((state, action: PayloadAction<DeviceRemoveMessage>) => {
             let removeId = action.payload.Identifier;
 
             if (!(removeId in state.devices)) {
@@ -197,18 +197,56 @@ const controllerSlice = createSlice({
             oldDevice.zones.forEach((zone) => {
                 state.zones[zone].devices = state.zones[zone].devices.filter((device) => device !== removeId);
             });
-        },
-    },
+        }),
+        requestAddDeviceToZone: create.asyncThunk(
+            async (payload: MoveDeviceToZone, thunkApi): Promise<AxiosResponse<any>[]> => {
+                const controllerState = (thunkApi.getState() as RootState).controller;
+                const connectionState = (thunkApi.getState() as RootState).connection;
+
+                let device = controllerState.devices[payload.deviceId];
+
+                let promises = device.zones.map((zoneId) => {
+                    let url = `${connectionState.url}/api/v1/zones/${zoneId}/devices/${payload.deviceId}`;
+                    return axios.delete(url);
+                });
+
+                if (!device.zones.includes(payload.zoneId) && payload.zoneId !== RootZone) {
+                    let url = `${connectionState.url}/api/v1/zones/${payload.zoneId}/devices/${payload.deviceId}`;
+                    promises.push(axios.put(url));
+                }
+
+                return Promise.all(promises);
+            },
+            {
+                pending: (state, action) => {},
+                fulfilled: (state, action) => {},
+                rejected: (state, action) => {},
+            }
+        ),
+        requestNameDevice: create.asyncThunk(
+            async (payload: NameDevice, thunkApi): Promise<AxiosResponse<any>[]> => {
+                const connectionState = (thunkApi.getState() as RootState).connection;
+
+                let url = `${connectionState.url}/api/v1/devices/${payload.deviceId}`;
+                return axios.patch(url, { name: payload.name });
+            },
+            {
+                pending: (state, action) => {},
+                fulfilled: (state, action) => {},
+                rejected: (state, action) => {},
+            }
+        ),
+    }),
 });
 
 export const {
-    updateConnectionState,
-    updateLastMessage,
     updateZone,
     removeZone,
     updateGateway,
     updateDevice,
     updateDeviceCapability,
     removeDevice,
+    requestAddDeviceToZone,
+    requestNameDevice,
 } = controllerSlice.actions;
 export default controllerSlice;

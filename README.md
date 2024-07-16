@@ -8,12 +8,12 @@
 
 ## Table of Contents
 
--   [Background](#background)
--   [Install](#install)
--   [Usage](#usage)
--   [Maintainers](#maintainers)
--   [Contributing](#contributing)
--   [License](#license)
+- [Background](#background)
+- [Install](#install)
+- [Usage](#usage)
+- [Maintainers](#maintainers)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Background
 
