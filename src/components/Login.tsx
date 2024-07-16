@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { updateConnectionUrl } from '../features/controller/connection-slice';
 import { useNavigate } from 'react-router';
 
-export default function ControllerLogin() {
+export default function Login() {
     const [url, setUrl] = useState("http://localhost:3000");
     const dispatch = useAppDispatch();
     let navigate = useNavigate();

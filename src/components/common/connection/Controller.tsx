@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
+import { useAppDispatch, useAppSelector } from '../../../app/hooks';
 import type { FC } from 'react';
 import { useEffect, useRef } from 'react';
 import {
@@ -8,7 +8,7 @@ import {
     updateDeviceCapability,
     updateGateway,
     updateZone,
-} from '../../features/controller/controller-slice';
+} from '../../../features/controller/controller-slice';
 import type {
     DeviceRemoveMessage,
     DeviceUpdateCapabilityMessage,
@@ -16,12 +16,12 @@ import type {
     GatewayUpdateMessage,
     ZoneRemoveMessage,
     ZoneUpdateMessage,
-} from '../../features/controller/messages';
+} from '../../../features/controller/messages';
 import {
     ConnectionProgress,
     updateConnectionState,
     updateLastMessage,
-} from '../../features/controller/connection-slice';
+} from '../../../features/controller/connection-slice';
 
 export const Controller = () => {
     const dispatch = useAppDispatch();

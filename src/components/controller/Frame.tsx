@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react';
-import { ControllerStatus } from './connection/ControllerStatus';
+import { ControllerStatus } from '../common/connection/ControllerStatus';
 import { Outlet, useLocation } from 'react-router';
-import { Controller } from './connection/Controller';
+import { Controller } from '../common/connection/Controller';
 import { Link } from 'react-router-dom';
 import {
     IconAirConditioning, IconAutomation,
@@ -11,7 +11,6 @@ import {
     IconGauge,
     IconHome,
     IconMap, IconMenu2,
-    IconPlug,
     IconShield, IconSmartHome, IconX,
 } from '@tabler/icons-react';
 
@@ -20,7 +19,7 @@ const root = [
 ];
 
 const control = [
-    { name: 'Lighting', href: '/controller/control/lighting', icon: IconBulb },
+    { name: 'Ambiance', href: '/controller/control/ambiance', icon: IconBulb },
     { name: 'Smart Devices', href: '/controller/control/devices', icon: IconSmartHome },
     { name: 'Heating and Cooling', href: '/controller/control/hvac', icon: IconAirConditioning },
     { name: 'Security and Safety', href: '/controller/control/security', icon: IconShield },
@@ -179,7 +178,7 @@ function Menu() {
     );
 }
 
-export default function ControllerFrame() {
+export default function Frame() {
     return (
         <>
             <div>

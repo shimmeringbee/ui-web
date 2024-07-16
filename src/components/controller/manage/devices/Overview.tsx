@@ -1,7 +1,7 @@
-import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { requestAddDeviceToZone, RootZone, Zone } from '../../features/controller/controller-slice';
+import { useAppDispatch, useAppSelector } from '../../../../app/hooks';
+import { requestAddDeviceToZone, RootZone, Zone } from '../../../../features/controller/controller-slice';
 import React, { FC, useState } from 'react';
-import { DeviceSingleRowTable, DeviceTable } from '../devices/DeviceTable';
+import { DeviceSingleRowTable, DeviceTable } from '../../../common/DeviceTable';
 import { DndContext, DragEndEvent, DragOverEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { Switch } from '@headlessui/react';
 import { IconChevronRight } from '@tabler/icons-react';
@@ -95,7 +95,7 @@ const ZoneSection: FC<ZoneSectionProps> = (props) => {
     );
 };
 
-export const DeviceOverview = () => {
+export const Overview = () => {
     const dispatch = useAppDispatch();
     const zones = useAppSelector((state) => state.controller.zones);
 

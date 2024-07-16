@@ -1,5 +1,5 @@
-import { useAppSelector } from '../../app/hooks';
-import { ConnectionProgress } from '../../features/controller/connection-slice';
+import { useAppSelector } from '../../../app/hooks';
+import { ConnectionProgress } from '../../../features/controller/connection-slice';
 
 export const ControllerStatus = () => {
     const connectionState = useAppSelector((state) => state.connection.progress);

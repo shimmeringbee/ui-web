@@ -1,16 +1,16 @@
-import { DeviceOverview } from './components/manage/DeviceOverview';
-import ControllerFrame from './components/ControllerFrame';
+import { Overview } from './components/controller/manage/devices/Overview';
+import Frame from './components/controller/Frame';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import ControllerLogin from './components/ControllerLogin';
+import Login from './components/Login';
 
 const router = createBrowserRouter([
     {
         index: true,
-        element: <ControllerLogin />,
+        element: <Login />,
     },
     {
         path: 'controller',
-        element: <ControllerFrame />,
+        element: <Frame />,
         children: [
             {
                 index: true,
@@ -20,8 +20,8 @@ const router = createBrowserRouter([
                 path: 'control',
                 children: [
                     {
-                        path: 'lighting',
-                        element: <h1>Lighting Unimplemented</h1>,
+                        path: 'ambiance',
+                        element: <h1>Ambiance Unimplemented</h1>,
                     },
                     {
                         path: 'devices',
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
                 children: [
                     {
                         path: 'devices',
-                        element: <DeviceOverview />,
+                        element: <Overview />,
                     },
                     {
                         path: 'zones',
