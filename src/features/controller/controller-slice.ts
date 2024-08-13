@@ -8,7 +8,7 @@ import type {
     ZoneUpdateMessage,
 } from './messages';
 import { createAppSlice } from '../../app/createAppSlice';
-import { MoveDeviceToZone, NameDevice } from './payloads';
+import { MoveDeviceToZone, NameDevice, NameZone } from './payloads';
 import { RootState } from '../../app/store';
 import axios, { AxiosResponse } from 'axios';
 
@@ -63,7 +63,7 @@ const initialState: ControllerState = {
     devices: {},
     zones: {
         0: {
-            name: 'Hidden Root',
+            name: 'Root',
             identifier: RootZone,
             parentZone: RootZone,
             subZones: [],
@@ -85,7 +85,6 @@ const controllerSlice = createAppSlice({
             if (!(zoneId in state.zones)) {
                 state.zones[zoneId] = {
                     identifier: zoneId,
-                    name: msg.Name,
                     parentZone: RootZone,
                     subZones: [],
                     devices: [],
@@ -93,6 +92,8 @@ const controllerSlice = createAppSlice({
 
                 state.zones[RootZone].subZones.push(zoneId);
             }
+
+            state.zones[zoneId].name = msg.Name;
 
             if (msg.Parent !== state.zones[zoneId].parentZone) {
                 let oldParent = state.zones[zoneId].parentZone;
@@ -236,6 +237,19 @@ const controllerSlice = createAppSlice({
                 rejected: (state, action) => {},
             }
         ),
+        requestNameZone: create.asyncThunk(
+            async (payload: NameZone, thunkApi): Promise<AxiosResponse<any>[]> => {
+                const connectionState = (thunkApi.getState() as RootState).connection;
+
+                let url = `${connectionState.url}/api/v1/zones/${payload.zoneId}`;
+                return axios.patch(url, { name: payload.name });
+            },
+            {
+                pending: (state, action) => {},
+                fulfilled: (state, action) => {},
+                rejected: (state, action) => {},
+            }
+        ),
     }),
 });
 
@@ -248,5 +262,6 @@ export const {
     removeDevice,
     requestAddDeviceToZone,
     requestNameDevice,
+    requestNameZone,
 } = controllerSlice.actions;
 export default controllerSlice;

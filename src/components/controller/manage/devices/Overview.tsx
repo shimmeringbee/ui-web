@@ -1,31 +1,11 @@
 import { useAppDispatch, useAppSelector } from '../../../../app/hooks';
-import { requestAddDeviceToZone, RootZone, Zone } from '../../../../features/controller/controller-slice';
+import { requestAddDeviceToZone, RootZone } from '../../../../features/controller/controller-slice';
 import React, { FC, useState } from 'react';
 import { DeviceSingleRowTable, DeviceTable } from '../../../common/DeviceTable';
 import { DndContext, DragEndEvent, DragOverEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { Switch } from '@headlessui/react';
 import { IconChevronRight } from '@tabler/icons-react';
-
-function zoneList(idx: number, state: { [id: number]: Zone }): number[] {
-    let returnZones: number[] = [idx];
-
-    state[idx].subZones.forEach((subZone) => {
-        let subZones = zoneList(subZone, state);
-        returnZones.push(...subZones);
-    });
-
-    return returnZones;
-}
-
-function zoneHierarchy(idx: number, state: { [id: number]: Zone }): number[] {
-    let zones: number[] = [];
-
-    for (let i = idx; i !== RootZone; i = state[i].parentZone) {
-        zones.push(i);
-    }
-
-    return zones.reverse();
-}
+import { zoneHierarchy, zoneList } from '../../../common/zones';
 
 interface ZoneHeaderProps {
     names: string[];
@@ -53,7 +33,6 @@ const ZoneHeader: FC<ZoneHeaderProps> = ({ names }) => {
 
 interface ZoneSectionProps {
     zone: number;
-    overZoneId: number;
     showEmptyZones?: boolean;
 }
 
@@ -71,7 +50,7 @@ const ZoneOrphan: FC<ZoneSectionProps> = (props) => {
     return (
         <section>
             <ZoneHeader names={['Orphaned Devices']} />
-            <DeviceTable deviceList={orphanedDevices} zoneId={props.zone} dragOver={props.zone === props.overZoneId} />
+            <DeviceTable deviceList={orphanedDevices} zoneId={props.zone} />
         </section>
     );
 };
@@ -90,7 +69,7 @@ const ZoneSection: FC<ZoneSectionProps> = (props) => {
     return (
         <section>
             <ZoneHeader names={zoneList.map((zone) => zones[zone].name || 'Unnamed')} />
-            <DeviceTable deviceList={deviceList} zoneId={props.zone} dragOver={props.zone === props.overZoneId} />
+            <DeviceTable deviceList={deviceList} zoneId={props.zone} />
         </section>
     );
 };
@@ -102,26 +81,15 @@ export const Overview = () => {
     let orderedZones = zoneList(RootZone, zones).filter((idx) => idx !== RootZone);
 
     const [activeId, setActiveId] = useState<string>('');
-    const [overZoneId, setOverZoneId] = useState<number>(-1);
     const [showEmptyZones, setShowEmptyZones] = useState<boolean>(false);
 
     let dragStart = (e: DragStartEvent) => {
         setActiveId(e.active.id as string);
     };
 
-    let dragOver = (e: DragOverEvent) => {
-        let overId = e.over?.id;
-
-        if (overId !== undefined) {
-            setOverZoneId(overId as number);
-        } else {
-            setOverZoneId(-1);
-        }
-    };
 
     let dragEnd = (e: DragEndEvent) => {
         setActiveId('');
-        setOverZoneId(-1);
 
         if (e.over !== undefined && e.over!.id !== 0) {
             let deviceId = e.active.id as string;
@@ -133,7 +101,7 @@ export const Overview = () => {
 
     return (
         <section>
-            <DndContext onDragEnd={dragEnd} onDragStart={dragStart} onDragOver={dragOver}>
+            <DndContext onDragEnd={dragEnd} onDragStart={dragStart}>
                 <h1>Device Overview</h1>
 
                 <span className="inline-flex rounded-md shadow-sm">
@@ -155,10 +123,10 @@ export const Overview = () => {
                     </div>
                 </span>
 
-                <ZoneOrphan zone={0} overZoneId={overZoneId} showEmptyZones={showEmptyZones} />
+                <ZoneOrphan zone={0} showEmptyZones={showEmptyZones} />
 
                 {orderedZones.map((zone) => (
-                    <ZoneSection zone={zone} key={zone} overZoneId={overZoneId} showEmptyZones={showEmptyZones} />
+                    <ZoneSection zone={zone} key={zone} showEmptyZones={showEmptyZones} />
                 ))}
 
                 <DragOverlay>{activeId !== '' ? <DeviceSingleRowTable identifier={activeId} /> : false}</DragOverlay>

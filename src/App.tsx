@@ -1,4 +1,5 @@
-import { Overview } from './components/controller/manage/devices/Overview';
+import { Overview as DeviceOverview } from './components/controller/manage/devices/Overview';
+import { Overview as ZoneOverview} from './components/controller/manage/zones/Overview';
 import Frame from './components/controller/Frame';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import Login from './components/Login';
@@ -46,11 +47,11 @@ const router = createBrowserRouter([
                 children: [
                     {
                         path: 'devices',
-                        element: <Overview />,
+                        element: <DeviceOverview />,
                     },
                     {
                         path: 'zones',
-                        element: <h1>Zones Unimplemented</h1>,
+                        element: <ZoneOverview />,
                     },
                     {
                         path: 'automations',

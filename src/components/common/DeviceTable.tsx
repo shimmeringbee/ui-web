@@ -1,4 +1,4 @@
-import { FC, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import type { ProductInformation } from '../../features/controller/capabilities';
 import { QuickActionList } from './QuickActionList';
@@ -6,11 +6,11 @@ import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { IconCheck, IconDragDrop, IconEdit, IconX } from '@tabler/icons-react';
 import { IconList } from './capabilities/IconList';
 import { requestNameDevice } from '../../features/controller/controller-slice';
+import { InlineEdit } from './InlineEdit';
 
 interface DeviceTableProps {
     deviceList: string[];
     zoneId: number;
-    dragOver: boolean;
 }
 
 export const DeviceTable: FC<DeviceTableProps> = (props) => {
@@ -31,7 +31,7 @@ export const DeviceTable: FC<DeviceTableProps> = (props) => {
         ];
     }
 
-    const { setNodeRef } = useDroppable({
+    const { setNodeRef, isOver } = useDroppable({
         id: props.zoneId,
     });
 
@@ -70,7 +70,7 @@ export const DeviceTable: FC<DeviceTableProps> = (props) => {
                                 </tr>
                             </thead>
                             <tbody
-                                className={'divide-y divide-gray-200 ' + (props.dragOver ? 'bg-gray-100' : 'bg-white')}
+                                className={'divide-y divide-gray-200 ' + (isOver ? 'bg-gray-100' : 'bg-white')}
                                 ref={setNodeRef}
                             >
                                 {rows}
@@ -83,60 +83,12 @@ export const DeviceTable: FC<DeviceTableProps> = (props) => {
     );
 };
 
-interface InlineDeviceNameEditProps {
-    identifier: string;
-    setEditingName: (value: ((prevState: boolean) => boolean) | boolean) => void;
-}
-
-const InlineDeviceNameEdit: FC<InlineDeviceNameEditProps> = (props) => {
-    const deviceName = useAppSelector((state) => state.controller.devices[props.identifier].name);
-    const dispatch = useAppDispatch();
-
-    const [name, setName] = useState(deviceName);
-
-    return (
-        <div className="flex">
-            <label htmlFor="email" className="sr-only">
-                Device Name
-            </label>
-            <input
-                id="name"
-                name="name"
-                type="name"
-                value={name}
-                className="block w-full rounded-md border-0 pl-2.5 py-1.5 text-gray-500 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                onInput={(e) => {
-                    return setName(e.currentTarget.value);
-                }}
-            />
-            <button
-                type="button"
-                className="p-1 text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                onClick={() => {
-                    dispatch(requestNameDevice({ deviceId: props.identifier, name: name || '' }));
-                    props.setEditingName(false);
-                }}
-            >
-                <IconCheck aria-hidden="true" className="h-5 w-5" />
-            </button>
-            <button
-                type="button"
-                className="p-1 text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                onClick={() => {
-                    props.setEditingName(false);
-                }}
-            >
-                <IconX aria-hidden="true" className="h-5 w-5" />
-            </button>
-        </div>
-    );
-};
-
 interface DeviceRowProps {
     identifier: string;
 }
 
 const DeviceRow: FC<DeviceRowProps> = ({ identifier }) => {
+    const dispatch = useAppDispatch();
     const device = useAppSelector((state) => state.controller.devices[identifier]);
 
     let productInfo: ProductInformation | undefined = undefined;
@@ -157,10 +109,14 @@ const DeviceRow: FC<DeviceRowProps> = ({ identifier }) => {
                 <div className="font-medium text-gray-900">{device.identifier}</div>
                 <div className="mt-1 text-gray-500 flex">
                     {editingName ? (
-                        <InlineDeviceNameEdit identifier={device.identifier} setEditingName={setEditingName} />
+                        <InlineEdit
+                            initialValue={device.name || ''}
+                            setEditingName={setEditingName}
+                            updateValue={(name) => {dispatch(requestNameDevice({ deviceId: identifier, name: name || '' }))}}
+                        />
                     ) : (
                         <>
-                            {device.name && <div className="pr-2">{device.name}</div>}
+                            {device.name && <div className="pr-1">{device.name}</div>}
                             <button
                                 type="button"
                                 className="p-0.5 text-gray-500 hover:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
